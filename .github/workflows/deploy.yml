@@ -1,4 +1,4 @@
-name: Deploy OSINT course
+name: Deploy OSINT enrolment gateway
 
 on:
   push:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Pages artifact
+    name: Build protected-course gateway
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -48,14 +48,29 @@ jobs:
           set -o pipefail
           time npm run build
 
-      - name: Validate Pages output
+      - name: Validate access boundary and Pages output
         shell: bash
         run: |
+          set -euo pipefail
           test -f build/index.html
           test -f build/sitemap.xml
           test -f build/CNAME
-          test -d build/course
-          echo "Validated $(find build -type f | wc -l) generated files"
+          test -f build/enrol/index.html
+          test -f build/login/index.html
+          test -f build/course/index.html
+          test -f build/dashboard/index.html
+          test -f build/resources/index.html
+
+          # No lesson body may be included in the public deployment artifact.
+          test ! -e build/course/welcome/index.html
+          test ! -e build/course/guardrails/index.html
+          test ! -e build/course/workflow/overview/index.html
+          test ! -e build/course/assessment/final-assessment/index.html
+
+          grep -qi 'Enrol in OSINT-101' build/index.html
+          grep -qi 'Account and enrolment required' build/enrol/index.html
+          grep -qi 'Protected learning area' build/course/index.html
+          echo "Validated $(find build -type f | wc -l) public gateway files"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
@@ -84,7 +99,7 @@ jobs:
           timeout: 300000
 
   verify:
-    name: Verify deployed course
+    name: Verify enrolment gateway
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -93,14 +108,22 @@ jobs:
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
-      - name: Smoke-test published routes
+      - name: Smoke-test public and gated routes
         shell: bash
         run: |
           set -euo pipefail
           base_url="${PAGE_URL%/}/"
-          routes=("" "course/welcome/" "resources/")
 
-          for route in "${routes[@]}"; do
+          declare -A routes=(
+            [""]="Enrol in OSINT-101"
+            ["enrol/"]="Account and enrolment required"
+            ["login/"]="Protected learning area"
+            ["course/"]="Protected learning area"
+            ["dashboard/"]="Protected learning area"
+            ["resources/"]="Protected learning area"
+          )
+
+          for route in "${!routes[@]}"; do
             url="${base_url}${route}"
             output="/tmp/osint-${route//\//-}.html"
             echo "Checking ${url}"
@@ -117,8 +140,15 @@ jobs:
               "${url}" \
               --output "${output}"
             grep -qi '<!doctype html' "${output}"
-            grep -qi 'OSINT' "${output}"
+            grep -qi "${routes[$route]}" "${output}"
           done
+
+          # Legacy lesson URLs must no longer resolve to publicly generated lesson pages.
+          legacy_status=$(curl --silent --output /dev/null --write-out '%{http_code}' --location "${base_url}course/welcome/")
+          if [[ "${legacy_status}" == "200" ]]; then
+            echo 'Legacy lesson route is still publicly accessible.' >&2
+            exit 1
+          fi
 
       - name: Publish successful deployment status
         if: success()
@@ -126,7 +156,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"success","target_url":"%s","description":"Pages deployment and route smoke tests passed","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"success","target_url":"%s","description":"Enrolment gateway deployed; protected lesson routes excluded","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
@@ -141,7 +171,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"failure","target_url":"%s","description":"Pages deployment or route smoke test failed","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"failure","target_url":"%s","description":"Enrolment gateway deployment or access-boundary test failed","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
