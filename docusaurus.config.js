@@ -7,7 +7,7 @@ const config = {
   organizationName: 'skunkworks-academy',
   projectName: 'osint',
   onBrokenLinks: 'throw',
-  markdown: {hooks: {onBrokenMarkdownLinks: 'throw'}},
+  onBrokenMarkdownLinks: 'throw',
   i18n: {defaultLocale: 'en', locales: ['en']},
   presets: [['classic', {
     docs: {sidebarPath: require.resolve('./sidebars.js'), routeBasePath: 'course'},
