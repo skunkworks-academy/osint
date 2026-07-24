@@ -3,7 +3,9 @@ import Link from '@docusaurus/Link';
 
 const PORTAL_URL = 'https://portal.skunkworksacademy.com/';
 const CHECKOUT_URL =
-  'https://portal.skunkworksacademy.com/checkout/?course=OSINT-101';
+  'https://portal.skunkworksacademy.com/checkout/?course=OSINT-101&source=osint';
+const SUPPORT_URL =
+  'mailto:training@skunkworks.africa?subject=OSINT-101%20enrolment%20support';
 
 export default function AccessGate({mode = 'enrol', compact = false}) {
   const signInFirst = mode === 'signin';
@@ -34,8 +36,8 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
           <div className="accessStep">
             <span>2</span>
             <div>
-              <strong>Enrol in OSINT-101</strong>
-              <p>Purchase, receive or confirm an active enrolment entitlement.</p>
+              <strong>Complete checkout for OSINT-101</strong>
+              <p>Use the same email address for checkout and your Academy Portal account.</p>
             </div>
           </div>
           <div className="accessStep">
@@ -54,19 +56,22 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
                 Sign in to Academy Portal
               </a>
               <a className="button button--secondary button--lg" href={CHECKOUT_URL}>
-                Enrol in OSINT-101
+                Open OSINT-101 checkout
               </a>
             </>
           ) : (
             <>
               <a className="button button--primary button--lg" href={CHECKOUT_URL}>
-                Enrol in OSINT-101
+                Open OSINT-101 checkout
               </a>
               <a className="button button--secondary button--lg" href={PORTAL_URL}>
                 Create account or sign in
               </a>
             </>
           )}
+          <a className="button button--ghost button--lg" href={SUPPORT_URL}>
+            Get enrolment help
+          </a>
           <Link className="button button--ghost button--lg" to="/">
             Return to overview
           </Link>
