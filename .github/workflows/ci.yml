@@ -7,6 +7,7 @@ on:
       - 'docs/**'
       - 'src/**'
       - 'static/**'
+      - 'scripts/**'
       - 'docusaurus.config.js'
       - 'sidebars.js'
       - 'package.json'
@@ -24,7 +25,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build, contrast and access validation
+    name: Build, responsive, contrast and access validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -40,6 +41,9 @@ jobs:
 
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
+
+      - name: Validate responsive source requirements
+        run: npm run validate:responsive
 
       - name: Build Docusaurus site
         shell: bash
@@ -70,7 +74,11 @@ jobs:
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
 
-          echo "Validated public gateway with $(find build -type f | wc -l) generated files"
+          # Confirm the additional responsive stylesheet was bundled into the generated site.
+          grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
+          grep -R -q --include='*.css' 'safe-area-inset-bottom' build/assets/css
+
+          echo "Validated responsive public gateway with $(find build -type f | wc -l) generated files"
 
       - name: Check for unsafe public lesson links
         shell: bash
