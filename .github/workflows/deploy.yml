@@ -7,6 +7,7 @@ on:
       - 'docs/**'
       - 'src/**'
       - 'static/**'
+      - 'scripts/**'
       - 'docusaurus.config.js'
       - 'sidebars.js'
       - 'package.json'
@@ -20,7 +21,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build protected-course gateway
+    name: Build responsive protected-course gateway
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -39,6 +40,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
+      - name: Validate responsive source requirements
+        run: npm run validate:responsive
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
@@ -48,7 +52,7 @@ jobs:
           set -o pipefail
           time npm run build
 
-      - name: Validate access boundary and Pages output
+      - name: Validate responsive access boundary and Pages output
         shell: bash
         run: |
           set -euo pipefail
@@ -70,7 +74,13 @@ jobs:
           grep -qi 'Enrol in OSINT-101' build/index.html
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
-          echo "Validated $(find build -type f | wc -l) public gateway files"
+
+          # Confirm mobile, touch and safe-area rules were bundled.
+          grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
+          grep -R -q --include='*.css' 'safe-area-inset-bottom' build/assets/css
+          grep -R -q --include='*.css' 'pointer:coarse' build/assets/css
+
+          echo "Validated $(find build -type f | wc -l) responsive public gateway files"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
@@ -99,7 +109,7 @@ jobs:
           timeout: 300000
 
   verify:
-    name: Verify enrolment gateway
+    name: Verify responsive enrolment gateway
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -194,7 +204,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"success","target_url":"%s","description":"Enrolment gateway deployed; protected lesson content excluded","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"success","target_url":"%s","description":"Responsive enrolment gateway deployed and verified","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
@@ -209,7 +219,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"failure","target_url":"%s","description":"Enrolment gateway deployment or access-boundary test failed","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"failure","target_url":"%s","description":"Responsive gateway deployment or verification failed","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
