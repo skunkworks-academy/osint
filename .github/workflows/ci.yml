@@ -1,0 +1,57 @@
+name: Validate OSINT course
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osint-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies and create lockfile
+        run: npm install --no-audit --no-fund --prefer-offline
+
+      - name: Build Docusaurus site
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build.log
+
+      - name: Validate generated site
+        shell: bash
+        run: |
+          test -f build/index.html
+          test -f build/sitemap.xml
+          test -f build/CNAME
+          test -d build/course
+          echo "Generated $(find build -type f | wc -l) files"
+
+      - name: Retain lockfile and build log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: osint-build-diagnostics-${{ github.run_id }}
+          path: |
+            package-lock.json
+            build.log
+          if-no-files-found: warn
+          retention-days: 7
