@@ -1,4 +1,4 @@
-name: Validate OSINT course
+name: Validate OSINT public gateway
 
 on:
   pull_request:
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build and validate
+    name: Build, contrast and access validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -47,20 +47,45 @@ jobs:
           set -o pipefail
           time npm run build 2>&1 | tee build.log
 
-      - name: Validate generated site
+      - name: Validate public gateway output
         shell: bash
         run: |
+          set -euo pipefail
           test -f build/index.html
           test -f build/sitemap.xml
           test -f build/CNAME
-          test -d build/course
-          echo "Generated $(find build -type f | wc -l) files"
+          test -f build/enrol/index.html
+          test -f build/login/index.html
+          test -f build/course/index.html
+          test -f build/dashboard/index.html
+          test -f build/resources/index.html
+
+          # Protected lesson bodies must never be generated into the public Pages artifact.
+          test ! -e build/course/welcome/index.html
+          test ! -e build/course/guardrails/index.html
+          test ! -e build/course/workflow/overview/index.html
+          test ! -e build/course/assessment/final-assessment/index.html
+
+          grep -qi 'Enrol in OSINT-101' build/index.html
+          grep -qi 'Account and enrolment required' build/enrol/index.html
+          grep -qi 'Protected learning area' build/course/index.html
+
+          echo "Validated public gateway with $(find build -type f | wc -l) generated files"
+
+      - name: Check for unsafe public lesson links
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R --line-number --exclude='*.map' 'href="/course/welcome\|href="/course/guardrails\|to="/course/' build; then
+            echo 'A protected lesson link was found in the public build.' >&2
+            exit 1
+          fi
 
       - name: Retain failed build log
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: osint-build-failure-${{ github.run_id }}
+          name: osint-gateway-build-failure-${{ github.run_id }}
           path: build.log
           if-no-files-found: warn
           retention-days: 7
