@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: osint-validation-${{ github.event.pull_request.number || github.ref }}
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v6
@@ -27,8 +29,27 @@ jobs:
           node-version: 24
           package-manager-cache: false
 
-      - name: Install dependencies and create lockfile
-        run: npm install --no-audit --no-fund --prefer-offline
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [[ -f package-lock.json ]]; then
+            npm ci --no-audit --no-fund --prefer-offline
+          else
+            npm install --no-audit --no-fund --prefer-offline
+          fi
+
+      - name: Commit generated lockfile
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && hashFiles('package-lock.json') != ''
+        shell: bash
+        run: |
+          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: add npm lockfile"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
 
       - name: Build Docusaurus site
         shell: bash
@@ -45,7 +66,7 @@ jobs:
           test -d build/course
           echo "Generated $(find build -type f | wc -l) files"
 
-      - name: Retain lockfile and build log
+      - name: Retain build diagnostics
         if: always()
         uses: actions/upload-artifact@v7
         with:
