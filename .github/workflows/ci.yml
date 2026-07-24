@@ -1,7 +1,7 @@
-name: Deploy OSINT course
+name: Validate OSINT course
 
 on:
-  push:
+  pull_request:
     branches: [main]
     paths:
       - 'docs/**'
@@ -11,20 +11,22 @@ on:
       - 'sidebars.js'
       - 'package.json'
       - 'package-lock.json'
+      - '.github/workflows/ci.yml'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: osint-pages-${{ github.ref }}
+  group: osint-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build Pages artifact
+    name: Build and validate
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -39,44 +41,26 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
       - name: Build Docusaurus site
         shell: bash
         run: |
           set -o pipefail
-          time npm run build
+          time npm run build 2>&1 | tee build.log
 
-      - name: Validate Pages output
+      - name: Validate generated site
         shell: bash
         run: |
           test -f build/index.html
           test -f build/sitemap.xml
           test -f build/CNAME
           test -d build/course
-          echo "Validated $(find build -type f | wc -l) generated files"
+          echo "Generated $(find build -type f | wc -l) files"
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+      - name: Retain failed build log
+        if: failure()
+        uses: actions/upload-artifact@v7
         with:
-          path: build
-          retention-days: 1
-
-  deploy:
-    name: Deploy GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          timeout: 300000
+          name: osint-build-failure-${{ github.run_id }}
+          path: build.log
+          if-no-files-found: warn
+          retention-days: 7
