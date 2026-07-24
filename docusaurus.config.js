@@ -14,6 +14,9 @@ const config = {
     },
   },
   future: {
+    v4: {
+      removeLegacyPostBuildHeadAttribute: true,
+    },
     faster: true,
   },
   i18n: {defaultLocale: 'en', locales: ['en']},
