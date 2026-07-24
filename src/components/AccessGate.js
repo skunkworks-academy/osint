@@ -2,8 +2,8 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 
 const PORTAL_URL = 'https://portal.skunkworksacademy.com/';
-const CHECKOUT_URL =
-  'https://portal.skunkworksacademy.com/checkout/?course=OSINT-101&source=osint';
+const ENROLMENT_REQUEST_URL =
+  'https://skunkworks.africa/products/osint-101-enrolment-request';
 const SUPPORT_URL =
   'mailto:training@skunkworks.africa?subject=OSINT-101%20enrolment%20support';
 
@@ -36,15 +36,15 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
           <div className="accessStep">
             <span>2</span>
             <div>
-              <strong>Complete checkout for OSINT-101</strong>
-              <p>Use the same email address for checkout and your Academy Portal account.</p>
+              <strong>Submit the OSINT-101 enrolment request</strong>
+              <p>Use the same email address in Shopify and your Academy Portal account.</p>
             </div>
           </div>
           <div className="accessStep">
             <span>3</span>
             <div>
               <strong>Open the course from My Learning</strong>
-              <p>Returning learners should sign in and launch the course from the Academy Portal.</p>
+              <p>Access is issued after Academy review and confirmation of the applicable entitlement.</p>
             </div>
           </div>
         </div>
@@ -55,14 +55,14 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
               <a className="button button--primary button--lg" href={PORTAL_URL}>
                 Sign in to Academy Portal
               </a>
-              <a className="button button--secondary button--lg" href={CHECKOUT_URL}>
-                Open OSINT-101 checkout
+              <a className="button button--secondary button--lg" href={ENROLMENT_REQUEST_URL}>
+                Submit enrolment request
               </a>
             </>
           ) : (
             <>
-              <a className="button button--primary button--lg" href={CHECKOUT_URL}>
-                Open OSINT-101 checkout
+              <a className="button button--primary button--lg" href={ENROLMENT_REQUEST_URL}>
+                Submit OSINT-101 enrolment request
               </a>
               <a className="button button--secondary button--lg" href={PORTAL_URL}>
                 Create account or sign in
@@ -78,10 +78,11 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
         </div>
 
         <div className="accessGate__assurance">
-          <strong>Why access is restricted</strong>
+          <strong>Temporary enrolment route</strong>
           <p>
-            The public website contains only course information. Lesson bodies are not included in
-            the public build. Access must be granted by the Academy identity and enrolment service.
+            The Academy subscription payment service is under maintenance. The Shopify request is
+            free and records the learner details needed for manual enrolment review. It does not
+            automatically grant access or charge a course fee.
           </p>
         </div>
       </div>
