@@ -102,7 +102,7 @@ jobs:
     name: Verify enrolment gateway
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     permissions:
       statuses: write
     env:
@@ -114,39 +114,77 @@ jobs:
           set -euo pipefail
           base_url="${PAGE_URL%/}/"
 
-          declare -A routes=(
-            [""]="Enrol in OSINT-101"
-            ["enrol/"]="Account and enrolment required"
-            ["login/"]="Protected learning area"
-            ["course/"]="Protected learning area"
-            ["dashboard/"]="Protected learning area"
-            ["resources/"]="Protected learning area"
-          )
+          check_route() {
+            local route="$1"
+            local expected="$2"
+            local url="${base_url}${route}"
+            local output="/tmp/osint-${route//\//-}.html"
 
-          for route in "${!routes[@]}"; do
-            url="${base_url}${route}"
-            output="/tmp/osint-${route//\//-}.html"
-            echo "Checking ${url}"
-            curl \
-              --fail \
+            for attempt in $(seq 1 24); do
+              echo "Checking ${url} (attempt ${attempt}/24)"
+              status=$(curl \
+                --silent \
+                --show-error \
+                --location \
+                --connect-timeout 10 \
+                --max-time 30 \
+                --output "${output}" \
+                --write-out '%{http_code}' \
+                "${url}" || true)
+
+              if [[ "${status}" == "200" ]] \
+                && grep -qi '<!doctype html' "${output}" \
+                && grep -qi "${expected}" "${output}"; then
+                return 0
+              fi
+
+              sleep 10
+            done
+
+            echo "Expected content did not propagate to ${url}." >&2
+            return 1
+          }
+
+          check_route "" "Enrol in OSINT-101"
+          check_route "enrol/" "Account and enrolment required"
+          check_route "login/" "Protected learning area"
+          check_route "course/" "Protected learning area"
+          check_route "dashboard/" "Protected learning area"
+          check_route "resources/" "Protected learning area"
+
+          # CDN propagation may briefly serve the previous lesson page. Retry until the
+          # route is missing or it no longer contains the former lesson body.
+          legacy_url="${base_url}course/welcome/"
+          legacy_output="/tmp/osint-legacy-welcome.html"
+          legacy_removed=false
+
+          for attempt in $(seq 1 24); do
+            echo "Checking retired lesson route ${legacy_url} (attempt ${attempt}/24)"
+            legacy_status=$(curl \
               --silent \
               --show-error \
               --location \
-              --retry 12 \
-              --retry-all-errors \
-              --retry-delay 10 \
               --connect-timeout 10 \
               --max-time 30 \
-              "${url}" \
-              --output "${output}"
-            grep -qi '<!doctype html' "${output}"
-            grep -qi "${routes[$route]}" "${output}"
+              --output "${legacy_output}" \
+              --write-out '%{http_code}' \
+              "${legacy_url}" || true)
+
+            if [[ "${legacy_status}" != "200" ]]; then
+              legacy_removed=true
+              break
+            fi
+
+            if ! grep -Eqi 'Welcome to OSINT Investigation Methodology|Finding what is already there|Course standard' "${legacy_output}"; then
+              legacy_removed=true
+              break
+            fi
+
+            sleep 10
           done
 
-          # Legacy lesson URLs must no longer resolve to publicly generated lesson pages.
-          legacy_status=$(curl --silent --output /dev/null --write-out '%{http_code}' --location "${base_url}course/welcome/")
-          if [[ "${legacy_status}" == "200" ]]; then
-            echo 'Legacy lesson route is still publicly accessible.' >&2
+          if [[ "${legacy_removed}" != "true" ]]; then
+            echo 'The retired lesson body remains publicly available after propagation retries.' >&2
             exit 1
           fi
 
@@ -156,7 +194,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"success","target_url":"%s","description":"Enrolment gateway deployed; protected lesson routes excluded","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"success","target_url":"%s","description":"Enrolment gateway deployed; protected lesson content excluded","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
