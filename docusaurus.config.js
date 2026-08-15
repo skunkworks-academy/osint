@@ -8,6 +8,12 @@ const config = {
   organizationName: 'skunkworks-academy',
   projectName: 'osint',
   onBrokenLinks: 'throw',
+  scripts: [
+    {
+      src: 'https://skunkworksacademy.com/assets/academy-navigation.js?v=2026.08.15.2',
+      defer: true,
+    },
+  ],
   markdown: {
     hooks: {
       onBrokenMarkdownLinks: 'throw',
