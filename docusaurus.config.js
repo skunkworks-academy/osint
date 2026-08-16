@@ -10,7 +10,7 @@ const config = {
   onBrokenLinks: 'throw',
   scripts: [
     {
-      src: 'https://skunkworksacademy.com/assets/academy-navigation.js?v=2026.08.15.2',
+      src: 'https://skunkworksacademy.com/assets/academy-navigation.js?v=2026.08.15.1',
       defer: true,
     },
   ],
