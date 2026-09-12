@@ -62,7 +62,21 @@ function severityWeight(severity) {
 }
 
 export function analyzeEmailHeaders(raw = '') {
-  const {headers, ordered} = parseHeaderBlock(raw);
+  const source = String(raw);
+  if (!source.trim()) {
+    return {
+      summary: {from: '', replyTo: '', returnPath: '', subject: '', date: '', messageId: '', fromDomain: '', replyDomain: '', returnDomain: ''},
+      auth: parseAuthenticationResults(''),
+      received: [],
+      signals: [],
+      riskScore: 0,
+      riskBand: 'low',
+      headers: {},
+      ordered: [],
+    };
+  }
+
+  const {headers, ordered} = parseHeaderBlock(source);
   const from = firstHeader(headers, 'from');
   const replyTo = firstHeader(headers, 'reply-to');
   const returnPath = firstHeader(headers, 'return-path');
@@ -176,7 +190,6 @@ export function analyzeUrl(value = '') {
   if (parsed.protocol !== 'https:') findings.push({severity: 'medium', code: 'no-https', message: `URL uses ${parsed.protocol || 'an unknown protocol'} rather than HTTPS.`});
   if (isIpHost) findings.push({severity: 'high', code: 'ip-host', message: 'URL uses an IP address instead of a domain name.'});
   if (host.includes('xn--')) findings.push({severity: 'medium', code: 'punycode', message: 'Hostname contains Punycode and should be checked for homograph abuse.'});
-  if (input.includes('@')) findings.push({severity: 'high', code: 'at-sign', message: 'URL contains @, which can obscure the effective destination.'});
   if (labels.length >= 5) findings.push({severity: 'low', code: 'deep-subdomain', message: 'Hostname has an unusually deep subdomain chain.'});
   if (parsed.port && !['80', '443'].includes(parsed.port)) findings.push({severity: 'low', code: 'nonstandard-port', message: `URL uses non-standard port ${parsed.port}.`});
   if (/%[0-9a-f]{2}/i.test(input)) findings.push({severity: 'low', code: 'encoding', message: 'URL contains percent-encoded characters; inspect the decoded form.'});
