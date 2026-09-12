@@ -10,8 +10,9 @@
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
     "deploy": "docusaurus deploy",
+    "test:forensics": "node scripts/test-forensics.mjs",
     "validate:responsive": "node scripts/validate-responsive.mjs",
-    "validate": "npm run validate:responsive && npm run build"
+    "validate": "npm run test:forensics && npm run validate:responsive && npm run build"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
