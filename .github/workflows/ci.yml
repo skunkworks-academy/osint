@@ -1,12 +1,14 @@
-name: Validate OSINT course
+name: Validate OSINT public gateway
 
 on:
   pull_request:
     branches: [main]
     paths:
+      - 'README.md'
       - 'docs/**'
       - 'src/**'
       - 'static/**'
+      - 'scripts/**'
       - 'docusaurus.config.js'
       - 'sidebars.js'
       - 'package.json'
@@ -24,7 +26,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build and validate
+    name: Build, responsive, contrast and access validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -41,26 +43,68 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
+      - name: Test forensic and workspace utilities
+        run: npm run test
+
+      - name: Validate responsive source requirements
+        run: npm run validate:responsive
+
       - name: Build Docusaurus site
         shell: bash
         run: |
           set -o pipefail
           time npm run build 2>&1 | tee build.log
 
-      - name: Validate generated site
+      - name: Validate public gateway output
         shell: bash
         run: |
+          set -euo pipefail
           test -f build/index.html
           test -f build/sitemap.xml
           test -f build/CNAME
-          test -d build/course
-          echo "Generated $(find build -type f | wc -l) files"
+          test -f build/enrol/index.html
+          test -f build/login/index.html
+          test -f build/course/index.html
+          test -f build/dashboard/index.html
+          test -f build/resources/index.html
+          test -f build/workbench/index.html
+
+          for route in analyst analyst/cases analyst/intake analyst/email analyst/entities analyst/infrastructure analyst/timeline analyst/evidence analyst/analysis analyst/report analyst/tools analyst/settings; do
+            test -f "build/${route}/index.html"
+            grep -qi 'Loading analyst workplace' "build/${route}/index.html"
+          done
+
+          # Protected lesson bodies must never be generated into the public Pages artifact.
+          test ! -e build/course/welcome/index.html
+          test ! -e build/course/guardrails/index.html
+          test ! -e build/course/workflow/overview/index.html
+          test ! -e build/course/assessment/final-assessment/index.html
+
+          grep -qi 'Enrol in OSINT-101' build/index.html
+          grep -qi 'Account and enrolment required' build/enrol/index.html
+          grep -qi 'Protected learning area' build/course/index.html
+          grep -qi 'Loading analyst workplace' build/workbench/index.html
+
+          # Confirm responsive/mobile rules are bundled.
+          grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
+          grep -R -q --include='*.css' 'safe-area-inset-bottom' build/assets/css
+
+          echo "Validated multi-interface analyst workplace with $(find build -type f | wc -l) generated files"
+
+      - name: Check for unsafe public lesson links
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R --line-number --exclude='*.map' 'href="/course/welcome\|href="/course/guardrails\|to="/course/' build; then
+            echo 'A protected lesson link was found in the public build.' >&2
+            exit 1
+          fi
 
       - name: Retain failed build log
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: osint-build-failure-${{ github.run_id }}
+          name: osint-gateway-build-failure-${{ github.run_id }}
           path: build.log
           if-no-files-found: warn
           retention-days: 7

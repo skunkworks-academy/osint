@@ -1,0 +1,660 @@
+/* Mobile and responsive enhancements loaded after custom.css. */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+main,
+header,
+section,
+article,
+nav,
+footer,
+.navbar__inner,
+.heroGrid,
+.sectionHeading,
+.accessGate__content {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+a,
+span,
+strong {
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.button,
+.navbar__link,
+.menu__link,
+.navbar__toggle,
+.clean-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.button {
+  min-height: 48px;
+  padding-inline: 1.25rem;
+  white-space: normal;
+  text-align: center;
+}
+
+.navbar__toggle,
+.navbar__search-input,
+.clean-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.navbar__inner {
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+.navbar__brand {
+  min-width: 0;
+  max-width: min(58vw, 24rem);
+}
+
+.navbar__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-sidebar {
+  width: min(90vw, 24rem);
+  background: var(--sw-surface-raised);
+}
+
+.navbar-sidebar__brand {
+  min-height: 4.5rem;
+  padding-inline: 1rem;
+  border-bottom: 1px solid var(--sw-border);
+}
+
+.navbar-sidebar__items {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.navbar-sidebar .menu__list {
+  padding: 0.6rem;
+}
+
+.navbar-sidebar .menu__link {
+  min-height: 48px;
+  align-items: center;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  color: var(--sw-text);
+  font-weight: 720;
+}
+
+.navbar-sidebar .menu__link:hover,
+.navbar-sidebar .menu__link--active {
+  color: var(--sw-heading);
+  background: var(--sw-accent-soft);
+}
+
+.navbar-sidebar .navbar-enrol {
+  width: 100%;
+  min-height: 50px;
+  margin: 0.5rem 0 0;
+}
+
+.accessBanner__inner > * {
+  min-width: 0;
+}
+
+.heroGrid > *,
+.sectionHeading > *,
+.curriculumItem > *,
+.guardrailPanel > *,
+.accessStep > * {
+  min-width: 0;
+}
+
+.heroCopy,
+.sectionHeading > p,
+.accessGate__lead {
+  max-width: 68ch;
+}
+
+.heroPanel,
+.featureCard,
+.outcomeCard,
+.metric,
+.curriculumItem,
+.accessJourney article,
+.accessGate {
+  contain: layout paint;
+}
+
+.section,
+.heroGrid,
+.accessBanner__inner {
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+}
+
+#outcomes,
+#curriculum,
+#access,
+#guardrails {
+  scroll-margin-top: 6.25rem;
+}
+
+@media (max-width: 996px) {
+  .navbar {
+    min-height: 4rem;
+  }
+
+  .navbar__inner {
+    padding-inline: 0.15rem;
+  }
+
+  .navbar__brand {
+    max-width: calc(100vw - 9.5rem);
+  }
+
+  .navbar__logo {
+    height: 1.8rem;
+    flex: 0 0 auto;
+  }
+
+  .heroBanner {
+    padding-top: clamp(3.75rem, 8vw, 5rem);
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .heroGrid > div:first-child {
+    max-width: 760px;
+  }
+
+  .heroPanel {
+    width: 100%;
+    min-height: 300px;
+  }
+
+  .heroPanel__content {
+    width: min(86%, 520px);
+  }
+
+  .sectionHeading {
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .sectionHeading > p {
+    max-width: 70ch;
+  }
+
+  .section--cta {
+    width: min(100% - 2rem, 1180px);
+  }
+
+  .section--cta .actionRow {
+    justify-content: flex-start;
+  }
+
+  .accessGate {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ifm-navbar-height: 4rem;
+  }
+
+  html {
+    scroll-padding-top: 4.75rem;
+  }
+
+  body {
+    font-size: 16px;
+    line-height: 1.58;
+  }
+
+  .navbar {
+    padding-inline: 0.35rem;
+  }
+
+  .navbar__brand {
+    max-width: calc(100vw - 8.75rem);
+  }
+
+  .navbar__title {
+    font-size: 0.93rem;
+  }
+
+  .accessBanner__inner {
+    width: min(100% - 1.25rem, 1180px);
+    padding-block: 0.72rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.7rem;
+    align-items: center;
+    justify-content: stretch;
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
+  .accessBanner__inner strong,
+  .accessBanner__inner > span:not(.accessBanner__icon) {
+    grid-column: 1;
+  }
+
+  .accessBanner__inner a {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.55rem;
+    text-align: center;
+  }
+
+  .heroBanner {
+    padding: 3.25rem 0.85rem 3.75rem;
+  }
+
+  .courseBadge {
+    max-width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.42rem 0.7rem;
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+  }
+
+  .heroTitle {
+    max-width: 12ch;
+    margin-bottom: 1.1rem;
+    font-size: clamp(2.45rem, 12vw, 3.7rem);
+    line-height: 0.98;
+    letter-spacing: -0.052em;
+  }
+
+  .heroCopy {
+    font-size: 1.03rem;
+    line-height: 1.58;
+  }
+
+  .actionRow {
+    width: 100%;
+    gap: 0.65rem;
+    margin-top: 1.4rem;
+  }
+
+  .actionRow .button {
+    width: 100%;
+    min-height: 50px;
+  }
+
+  .heroTrust {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .heroTrust span {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .heroPanel {
+    min-height: 235px;
+    border-radius: 22px;
+  }
+
+  .heroPanel__content {
+    width: min(84%, 360px);
+  }
+
+  .heroPanel__label {
+    margin-bottom: 1rem;
+    font-size: 0.67rem;
+  }
+
+  .heroPanel__content strong {
+    font-size: clamp(2.4rem, 15vw, 3.35rem);
+  }
+
+  .heroPanel__content > span:not(.heroPanel__label) {
+    font-size: clamp(1.3rem, 8vw, 1.85rem);
+  }
+
+  .heroPanel__line {
+    margin-block: 1rem;
+  }
+
+  .section {
+    width: min(100% - 1.25rem, 1180px);
+    padding-block: clamp(3rem, 12vw, 4.5rem);
+  }
+
+  .section--compact {
+    padding-top: 0;
+    padding-bottom: 0.5rem;
+  }
+
+  .section--surface::before {
+    inset: 0 -0.25rem;
+  }
+
+  .sectionHeading {
+    margin-bottom: 1.5rem;
+  }
+
+  .sectionHeading h2 {
+    font-size: clamp(1.9rem, 9vw, 2.75rem);
+    line-height: 1.08;
+  }
+
+  .sectionHeading > p {
+    font-size: 0.98rem;
+  }
+
+  .metricGrid--hero {
+    margin-top: -1rem;
+  }
+
+  .metric {
+    min-height: 96px;
+    padding: 1rem 1.1rem;
+    border-radius: 15px;
+  }
+
+  .metric strong {
+    font-size: 1.85rem;
+  }
+
+  .metric span {
+    font-size: 0.92rem;
+  }
+
+  .featureCard,
+  .accessJourney article {
+    min-height: auto;
+    padding: 1.25rem;
+  }
+
+  .outcomeCard {
+    min-height: auto;
+    padding: 1.15rem;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+
+  .outcomeCard p {
+    font-size: 0.98rem;
+  }
+
+  .curriculumItem {
+    padding: 1.1rem;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: start;
+  }
+
+  .curriculumItem__lock {
+    grid-column: 2;
+    margin-top: 0.35rem;
+  }
+
+  .curriculumItem p {
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+
+  .accessJourney article > span {
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .guardrailPanel {
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 18px;
+  }
+
+  .guardrailPanel__icon {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .section--cta {
+    width: min(100% - 1.25rem, 1180px);
+    margin-bottom: 2.5rem;
+    padding: 1.5rem 1.2rem;
+    gap: 1rem;
+    border-radius: 22px;
+  }
+
+  .section--cta h2 {
+    margin-bottom: 0.65rem;
+    font-size: clamp(1.75rem, 8vw, 2.45rem);
+  }
+
+  .pageShell {
+    min-height: auto;
+    align-items: start;
+    padding-top: 1.25rem;
+    padding-bottom: 3rem;
+  }
+
+  .accessGate {
+    border-radius: 20px;
+  }
+
+  .accessGate__status {
+    min-height: 2.8rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.035em;
+  }
+
+  .accessGate__content {
+    padding: 1.25rem;
+  }
+
+  .accessGate h1 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+    line-height: 1.04;
+  }
+
+  .accessGate__lead {
+    font-size: 1rem;
+  }
+
+  .accessSteps {
+    margin-block: 1.4rem;
+    gap: 0.65rem;
+  }
+
+  .accessStep {
+    padding: 1rem;
+  }
+
+  .accessGate__assurance {
+    margin-top: 1.35rem;
+    padding: 0.9rem;
+  }
+
+  .footer {
+    padding-top: 2.5rem;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  }
+
+  .footer__links {
+    gap: 1.75rem;
+  }
+
+  .footer__col {
+    flex-basis: 100%;
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .navbar__title {
+    display: none;
+  }
+
+  .navbar__brand {
+    max-width: 3rem;
+  }
+
+  .accessBanner__inner {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .accessBanner__inner a {
+    align-self: flex-start;
+    padding: 0.2rem 0;
+  }
+
+  .heroBanner {
+    padding-inline: 0.7rem;
+  }
+
+  .heroTitle {
+    max-width: 100%;
+    font-size: clamp(2.25rem, 12.5vw, 3rem);
+  }
+
+  .section,
+  .section--cta {
+    width: min(100% - 1rem, 1180px);
+  }
+
+  .metricGrid {
+    gap: 0.7rem;
+  }
+
+  .metric {
+    min-height: 88px;
+  }
+
+  .curriculumItem {
+    grid-template-columns: 1fr;
+  }
+
+  .curriculumItem__number,
+  .curriculumItem__lock {
+    grid-column: 1;
+  }
+
+  .curriculumItem__lock {
+    justify-self: start;
+  }
+
+  .guardrailPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .accessStep {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .accessGate__content {
+    padding: 1.05rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .heroTitle {
+    font-size: 2.1rem;
+  }
+
+  .button {
+    padding-inline: 0.9rem;
+    font-size: 0.94rem;
+  }
+
+  .courseBadge {
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 540px) and (orientation: landscape) {
+  .heroBanner {
+    padding-block: 2.75rem;
+  }
+
+  .heroGrid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(230px, 0.75fr);
+    gap: 1.5rem;
+  }
+
+  .heroTitle {
+    font-size: clamp(2.35rem, 6vw, 3.8rem);
+  }
+
+  .heroPanel {
+    min-height: 250px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .button:hover {
+    transform: none;
+  }
+
+  .button:active,
+  .navbar-sidebar .menu__link:active {
+    transform: scale(0.985);
+  }
+}
+
+@media (prefers-reduced-data: reduce) {
+  .heroBanner,
+  body {
+    background-image: none;
+  }
+
+  .heroPanel__grid,
+  .heroBanner::after {
+    display: none;
+  }
+}

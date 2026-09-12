@@ -1,4 +1,4 @@
-name: Deploy OSINT course
+name: Deploy OSINT enrolment gateway
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - 'docs/**'
       - 'src/**'
       - 'static/**'
+      - 'scripts/**'
       - 'docusaurus.config.js'
       - 'sidebars.js'
       - 'package.json'
@@ -20,7 +21,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Pages artifact
+    name: Build responsive protected-course gateway
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -39,6 +40,12 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
+      - name: Test forensic and workspace utilities
+        run: npm run test
+
+      - name: Validate responsive source requirements
+        run: npm run validate:responsive
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
@@ -48,14 +55,42 @@ jobs:
           set -o pipefail
           time npm run build
 
-      - name: Validate Pages output
+      - name: Validate responsive access boundary and Pages output
         shell: bash
         run: |
+          set -euo pipefail
           test -f build/index.html
           test -f build/sitemap.xml
           test -f build/CNAME
-          test -d build/course
-          echo "Validated $(find build -type f | wc -l) generated files"
+          test -f build/enrol/index.html
+          test -f build/login/index.html
+          test -f build/course/index.html
+          test -f build/dashboard/index.html
+          test -f build/resources/index.html
+          test -f build/workbench/index.html
+
+          for route in analyst analyst/cases analyst/intake analyst/email analyst/entities analyst/infrastructure analyst/timeline analyst/evidence analyst/analysis analyst/report analyst/tools analyst/settings; do
+            test -f "build/${route}/index.html"
+            grep -qi 'Loading analyst workplace' "build/${route}/index.html"
+          done
+
+          # No lesson body may be included in the public deployment artifact.
+          test ! -e build/course/welcome/index.html
+          test ! -e build/course/guardrails/index.html
+          test ! -e build/course/workflow/overview/index.html
+          test ! -e build/course/assessment/final-assessment/index.html
+
+          grep -qi 'Enrol in OSINT-101' build/index.html
+          grep -qi 'Account and enrolment required' build/enrol/index.html
+          grep -qi 'Protected learning area' build/course/index.html
+          grep -qi 'Loading analyst workplace' build/workbench/index.html
+
+          # Confirm mobile, touch and safe-area rules were bundled.
+          grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
+          grep -R -q --include='*.css' 'safe-area-inset-bottom' build/assets/css
+          grep -R -q --include='*.css' 'pointer:coarse' build/assets/css
+
+          echo "Validated $(find build -type f | wc -l) responsive public gateway files"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
