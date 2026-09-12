@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'README.md'
       - 'docs/**'
       - 'src/**'
       - 'static/**'
@@ -42,8 +43,8 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
-      - name: Test forensic utilities
-        run: npm run test:forensics
+      - name: Test forensic and workspace utilities
+        run: npm run test
 
       - name: Validate responsive source requirements
         run: npm run validate:responsive
@@ -68,6 +69,11 @@ jobs:
           test -f build/resources/index.html
           test -f build/workbench/index.html
 
+          for route in analyst analyst/cases analyst/intake analyst/email analyst/entities analyst/infrastructure analyst/timeline analyst/evidence analyst/analysis analyst/report analyst/tools analyst/settings; do
+            test -f "build/${route}/index.html"
+            grep -qi 'Loading analyst workplace' "build/${route}/index.html"
+          done
+
           # Protected lesson bodies must never be generated into the public Pages artifact.
           test ! -e build/course/welcome/index.html
           test ! -e build/course/guardrails/index.html
@@ -77,13 +83,13 @@ jobs:
           grep -qi 'Enrol in OSINT-101' build/index.html
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
-          grep -qi 'Investigation console' build/workbench/index.html
+          grep -qi 'Loading analyst workplace' build/workbench/index.html
 
-          # Confirm the additional responsive stylesheet was bundled into the generated site.
+          # Confirm responsive/mobile rules are bundled.
           grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
           grep -R -q --include='*.css' 'safe-area-inset-bottom' build/assets/css
 
-          echo "Validated responsive public gateway with $(find build -type f | wc -l) generated files"
+          echo "Validated multi-interface analyst workplace with $(find build -type f | wc -l) generated files"
 
       - name: Check for unsafe public lesson links
         shell: bash

@@ -55,7 +55,7 @@ const config = {
       {
         name: 'description',
         content:
-          'Explore OSINT-101 and enrol through Skunkworks Academy. Course lessons require an Academy account and active enrolment.',
+          'Explore OSINT-101 and use the Skunkworks OSINT Analyst Workplace for structured case management, evidence handling, forensics, analysis and reporting.',
       },
       {name: 'theme-color', content: '#071018'},
       {name: 'robots', content: 'index,follow,max-image-preview:large'},
@@ -73,7 +73,7 @@ const config = {
       },
       items: [
         {to: '/', label: 'Overview', position: 'left'},
-        {to: '/workbench', label: 'Analyst Workbench', position: 'left'},
+        {to: '/analyst/', label: 'Analyst Workplace', position: 'left'},
         {to: '/#outcomes', label: 'Outcomes', position: 'left'},
         {to: '/#curriculum', label: 'Curriculum', position: 'left'},
         {to: '/dashboard', label: 'Dashboard', position: 'left'},
@@ -97,9 +97,20 @@ const config = {
           title: 'OSINT-101',
           items: [
             {label: 'Course overview', to: '/'},
-            {label: 'Analyst Workbench', to: '/workbench'},
+            {label: 'Analyst Workplace', to: '/analyst/'},
+            {label: 'Legacy workbench route', to: '/workbench'},
             {label: 'Enrol', to: '/enrol'},
             {label: 'Learner sign-in', to: '/login'},
+          ],
+        },
+        {
+          title: 'Analyst Workplace',
+          items: [
+            {label: 'Mission control', to: '/analyst/'},
+            {label: 'Case registry', to: '/analyst/cases/'},
+            {label: 'Evidence intake', to: '/analyst/intake/'},
+            {label: 'Email lab', to: '/analyst/email/'},
+            {label: 'Reporting studio', to: '/analyst/report/'},
           ],
         },
         {
