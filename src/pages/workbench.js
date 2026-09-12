@@ -72,13 +72,14 @@ function Metric({label, value, sub}) {
 
 function GraphPanel({graph}) {
   const visibleNodes = graph.nodes.slice(0, 18);
+  const nodeSignature = visibleNodes.map((node) => `${node.type}:${node.id}`).join('|');
   const positions = useMemo(() => {
     const count = Math.max(visibleNodes.length, 1);
     return visibleNodes.map((node, index) => {
       const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
       return {node, x: 320 + Math.cos(angle) * 220, y: 210 + Math.sin(angle) * 145};
     });
-  }, [visibleNodes.map((node) => `${node.type}:${node.id}`).join('|')]);
+  }, [nodeSignature]);
 
   const byId = new Map(positions.map((item) => [item.node.id, item]));
   const edges = graph.edges.filter((edge) => byId.has(edge.from) && byId.has(edge.to)).slice(0, 30);
@@ -119,7 +120,9 @@ function DownloadButton({caseData, emailAnalysis, iocs, graph, urlAnalysis}) {
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = `${caseData.id || 'osint-case'}.json`;
+    document.body.appendChild(anchor);
     anchor.click();
+    anchor.remove();
     URL.revokeObjectURL(url);
   };
 
@@ -127,7 +130,8 @@ function DownloadButton({caseData, emailAnalysis, iocs, graph, urlAnalysis}) {
 }
 
 export default function Workbench() {
-  const [caseData, setCaseData] = useState(makeCase);
+  const [caseData, setCaseData] = useState(EMPTY_CASE);
+  const [storageReady, setStorageReady] = useState(false);
   const [activeTool, setActiveTool] = useState('email');
   const [observable, setObservable] = useState('');
   const [observableType, setObservableType] = useState('generic');
@@ -138,19 +142,22 @@ export default function Workbench() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) setCaseData({...makeCase(), ...JSON.parse(saved)});
+      setCaseData(saved ? {...makeCase(), ...JSON.parse(saved)} : makeCase());
     } catch {
-      // Local persistence is optional; the workbench remains usable without it.
+      setCaseData(makeCase());
+    } finally {
+      setStorageReady(true);
     }
   }, []);
 
   useEffect(() => {
+    if (!storageReady) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({...caseData, updatedAt: nowIso()}));
     } catch {
       // Ignore blocked storage or quota errors.
     }
-  }, [caseData]);
+  }, [caseData, storageReady]);
 
   const emailAnalysis = useMemo(() => analyzeEmailHeaders(caseData.rawHeaders), [caseData.rawHeaders]);
   const combinedCorpus = `${caseData.rawHeaders}\n${caseData.corpus}\n${caseData.notes}`;
@@ -169,13 +176,20 @@ export default function Workbench() {
     const text = await file.text();
     const headerEnd = text.search(/\r?\n\r?\n/);
     const headers = headerEnd > -1 ? text.slice(0, headerEnd) : text;
-    updateCase({rawHeaders: headers, corpus: `${caseData.corpus}\n\n${text}`.trim()});
+    setCaseData((current) => ({
+      ...current,
+      rawHeaders: headers,
+      corpus: `${current.corpus}\n\n${text}`.trim(),
+      updatedAt: nowIso(),
+    }));
   };
 
   const hashText = async () => {
     setHashBusy(true);
     try {
       setHashResult(await sha256Text(caseData.corpus));
+    } catch (error) {
+      setHashResult(`Unable to hash text: ${error.message}`);
     } finally {
       setHashBusy(false);
     }
@@ -188,6 +202,8 @@ export default function Workbench() {
     try {
       const digest = await sha256File(file);
       setHashResult(`${file.name}\nSHA-256: ${digest}`);
+    } catch (error) {
+      setHashResult(`Unable to hash file: ${error.message}`);
     } finally {
       setHashBusy(false);
     }
@@ -323,7 +339,7 @@ export default function Workbench() {
             {activeTool === 'report' ? (
               <>
                 <div className={styles.panelHeading}><div><p className={styles.eyebrow}>ANALYTIC PRODUCT</p><h2>Case summary and export</h2></div><DownloadButton caseData={caseData} emailAnalysis={emailAnalysis} iocs={iocs} graph={graph} urlAnalysis={urlAnalysis} /></div>
-                <div className={styles.reportGrid}><article className={styles.subpanel}><h3>Assessment</h3><dl className={styles.definitionList}><dt>Case</dt><dd>{caseData.id}</dd><dt>Status</dt><dd>{caseData.status}</dd><dt>Risk</dt><dd>{risk.score}/100 · {risk.band}</dd><dt>Email signals</dt><dd>{emailAnalysis.signals.length}</dd><dt>Indicators</dt><dd>{totalIocs}</dd><dt>Evidence items</dt><dd>{caseData.evidence.length}</dd></dl></article><article className={styles.subpanel}><h3>Analyst notes</h3><textarea rows="11" value={caseData.notes} onChange={(e) => updateCase({notes: e.target.value})} placeholder="Write a concise assessment. Separate verified facts, analytical judgements, assumptions and outstanding collection requirements." /></article></div>
+                <div className={styles.reportGrid}><article className={styles.subpanel}><h3>Assessment</h3><dl className={styles.definitionList}><dt>Case</dt><dd>{caseData.id || 'Initialising…'}</dd><dt>Status</dt><dd>{caseData.status}</dd><dt>Risk</dt><dd>{risk.score}/100 · {risk.band}</dd><dt>Email signals</dt><dd>{emailAnalysis.signals.length}</dd><dt>Indicators</dt><dd>{totalIocs}</dd><dt>Evidence items</dt><dd>{caseData.evidence.length}</dd></dl></article><article className={styles.subpanel}><h3>Analyst notes</h3><textarea rows="11" value={caseData.notes} onChange={(e) => updateCase({notes: e.target.value})} placeholder="Write a concise assessment. Separate verified facts, analytical judgements, assumptions and outstanding collection requirements." /></article></div>
                 <article className={styles.subpanel}><h3>Reporting discipline</h3><p>State what is known, what is assessed, the evidence supporting each judgement, alternative explanations, confidence, limitations and recommended next collection steps. A risk score is triage support—not proof of maliciousness or identity attribution.</p></article>
               </>
             ) : null}
