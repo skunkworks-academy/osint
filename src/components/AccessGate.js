@@ -44,7 +44,7 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
             <span>3</span>
             <div>
               <strong>Open the course from My Learning</strong>
-              <p>Returning learners should sign in and launch the course from the Academy Portal.</p>
+              <p>Access is issued after Academy review and confirmation of the applicable entitlement.</p>
             </div>
           </div>
         </div>
@@ -78,10 +78,11 @@ export default function AccessGate({mode = 'enrol', compact = false}) {
         </div>
 
         <div className="accessGate__assurance">
-          <strong>Why access is restricted</strong>
+          <strong>Temporary enrolment route</strong>
           <p>
-            The public website contains only course information. Lesson bodies are not included in
-            the public build. Access must be granted by the Academy identity and enrolment service.
+            The Academy subscription payment service is under maintenance. The Shopify request is
+            free and records the learner details needed for manual enrolment review. It does not
+            automatically grant access or charge a course fee.
           </p>
         </div>
       </div>
