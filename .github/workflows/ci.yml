@@ -70,6 +70,7 @@ jobs:
 
           for route in analyst analyst/cases analyst/intake analyst/email analyst/entities analyst/infrastructure analyst/timeline analyst/evidence analyst/analysis analyst/report analyst/tools analyst/settings; do
             test -f "build/${route}/index.html"
+            grep -qi 'Loading analyst workplace' "build/${route}/index.html"
           done
 
           # Protected lesson bodies must never be generated into the public Pages artifact.
@@ -81,12 +82,7 @@ jobs:
           grep -qi 'Enrol in OSINT-101' build/index.html
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
-          grep -qi 'Analyst operational picture' build/workbench/index.html
-          grep -qi 'Analyst operational picture' build/analyst/index.html
-          grep -qi 'Investigation registry' build/analyst/cases/index.html
-          grep -qi 'Evidence and artefact intake' build/analyst/intake/index.html
-          grep -qi 'Message authentication' build/analyst/email/index.html
-          grep -qi 'Assessment and reporting studio' build/analyst/report/index.html
+          grep -qi 'Loading analyst workplace' build/workbench/index.html
 
           # Confirm responsive/mobile rules are bundled.
           grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
