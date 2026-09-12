@@ -19,7 +19,7 @@ assert.ok(email.signals.some((signal) => signal.code === 'dmarc-fail'));
 
 const iocs = extractIOCs('Email analyst@example.com URL https://example.com/a IP 203.0.113.10 hash 0123456789abcdef0123456789abcdef');
 assert.deepEqual(iocs.emails, ['analyst@example.com']);
-assert.ok(iocs.domains.includes('example.com'));
+assert.deepEqual(iocs.domains, ['example.com']);
 assert.deepEqual(iocs.ipv4, ['203.0.113.10']);
 assert.deepEqual(iocs.md5, ['0123456789abcdef0123456789abcdef']);
 
