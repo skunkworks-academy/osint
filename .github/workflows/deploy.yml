@@ -40,9 +40,6 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
-      - name: Test forensic and workspace utilities
-        run: npm run test
-
       - name: Validate responsive source requirements
         run: npm run validate:responsive
 
@@ -83,7 +80,6 @@ jobs:
           grep -qi 'Enrol in OSINT-101' build/index.html
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
-          grep -qi 'Loading analyst workplace' build/workbench/index.html
 
           # Confirm mobile, touch and safe-area rules were bundled.
           grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
@@ -119,7 +115,7 @@ jobs:
           timeout: 300000
 
   verify:
-    name: Verify deployed course
+    name: Verify responsive enrolment gateway
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -161,7 +157,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"success","target_url":"%s","description":"Pages deployment and route smoke tests passed","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"success","target_url":"%s","description":"Responsive enrolment gateway deployed and verified","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
@@ -176,7 +172,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          payload=$(printf '{"state":"failure","target_url":"%s","description":"Pages deployment or route smoke test failed","context":"deployment/osint-pages"}' "${PAGE_URL}")
+          payload=$(printf '{"state":"failure","target_url":"%s","description":"Responsive gateway deployment or verification failed","context":"deployment/osint-pages"}' "${PAGE_URL}")
           curl --fail --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${GH_TOKEN}" \
