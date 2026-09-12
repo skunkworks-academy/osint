@@ -73,6 +73,7 @@ const config = {
       },
       items: [
         {to: '/', label: 'Overview', position: 'left'},
+        {to: '/workbench', label: 'Analyst Workbench', position: 'left'},
         {to: '/#outcomes', label: 'Outcomes', position: 'left'},
         {to: '/#curriculum', label: 'Curriculum', position: 'left'},
         {to: '/dashboard', label: 'Dashboard', position: 'left'},
@@ -96,6 +97,7 @@ const config = {
           title: 'OSINT-101',
           items: [
             {label: 'Course overview', to: '/'},
+            {label: 'Analyst Workbench', to: '/workbench'},
             {label: 'Enrol', to: '/enrol'},
             {label: 'Learner sign-in', to: '/login'},
           ],
