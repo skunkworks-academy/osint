@@ -1,5 +1,8 @@
 const HEADER_NAME = /^([!-9;-~]+):\s*(.*)$/;
 
+export const MAX_HASH_FILE_BYTES = 64 * 1024 * 1024;
+
+/** Unfold RFC-style continuation lines and return individual header lines. */
 export function unfoldHeaders(raw = '') {
   return String(raw)
     .replace(/\r\n/g, '\n')
@@ -7,6 +10,7 @@ export function unfoldHeaders(raw = '') {
     .split('\n');
 }
 
+/** Parse an RFC-style header block into ordered and keyed representations. */
 export function parseHeaderBlock(raw = '') {
   const headers = {};
   const ordered = [];
@@ -24,10 +28,12 @@ export function parseHeaderBlock(raw = '') {
   return {headers, ordered};
 }
 
+/** Return the first value for a case-insensitive parsed header name. */
 export function firstHeader(headers, name) {
   return headers?.[String(name).toLowerCase()]?.[0] ?? '';
 }
 
+/** Extract the first email address from a mailbox-style header value. */
 export function addressFromHeader(value = '') {
   const angle = String(value).match(/<([^<>\s]+@[^<>\s]+)>/);
   if (angle) return angle[1].toLowerCase();
@@ -35,12 +41,14 @@ export function addressFromHeader(value = '') {
   return direct ? direct[0].toLowerCase() : '';
 }
 
+/** Extract and normalize the domain portion of an email address/header. */
 export function domainFromEmail(value = '') {
   const email = addressFromHeader(value) || String(value).trim().toLowerCase();
   const at = email.lastIndexOf('@');
   return at > -1 ? email.slice(at + 1).replace(/[>),;\s]+$/g, '') : '';
 }
 
+/** Parse SPF, DKIM, DMARC and ARC outcomes from Authentication-Results. */
 export function parseAuthenticationResults(value = '') {
   const normalized = String(value).toLowerCase();
   const status = (mechanism) => {
@@ -57,10 +65,12 @@ export function parseAuthenticationResults(value = '') {
   };
 }
 
+/** Map a signal severity to its triage contribution. */
 function severityWeight(severity) {
   return {info: 0, low: 4, medium: 10, high: 18, critical: 28}[severity] ?? 0;
 }
 
+/** Analyze supplied email headers for authentication, identity and routing signals. */
 export function analyzeEmailHeaders(raw = '') {
   const source = String(raw);
   if (!source.trim()) {
@@ -130,15 +140,18 @@ export function analyzeEmailHeaders(raw = '') {
   };
 }
 
+/** Validate a dotted-quad IPv4 string without accepting out-of-range octets. */
 function validIPv4(value) {
   const octets = value.split('.');
   return octets.length === 4 && octets.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255);
 }
 
+/** Normalize a domain-like value for correlation. */
 function normalizeDomain(value) {
   return String(value).toLowerCase().replace(/^www\./, '').replace(/[).,;:!?]+$/g, '');
 }
 
+/** Extract common indicators of compromise from analyst-supplied text. */
 export function extractIOCs(text = '') {
   const source = String(text);
   const emails = new Set((source.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []).map((v) => v.toLowerCase()));
@@ -172,6 +185,7 @@ export function extractIOCs(text = '') {
   };
 }
 
+/** Inspect a URL structurally without requesting the destination. */
 export function analyzeUrl(value = '') {
   const input = String(value).trim();
   const findings = [];
@@ -211,6 +225,7 @@ export function analyzeUrl(value = '') {
   };
 }
 
+/** Build deliberate public-source pivot links for a selected observable. */
 export function observableSearchLinks(value = '', type = 'generic') {
   const observable = String(value).trim();
   if (!observable) return [];
@@ -236,18 +251,138 @@ export function observableSearchLinks(value = '', type = 'generic') {
   return links;
 }
 
+/** Hash an analyst-provided text value with SHA-256 using Web Crypto. */
 export async function sha256Text(value = '') {
   const bytes = new TextEncoder().encode(String(value));
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** Hash a local file with SHA-256 after enforcing the 64 MiB in-memory limit. */
 export async function sha256File(file) {
   if (!file?.arrayBuffer) throw new TypeError('A browser File object is required.');
+  if (Number.isFinite(file.size) && file.size > MAX_HASH_FILE_BYTES) {
+    throw new RangeError('File exceeds the 64 MiB local hashing limit.');
+  }
   const digest = await globalThis.crypto.subtle.digest('SHA-256', await file.arrayBuffer());
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** Split a MIME entity into its header block and body. */
+function splitMimeEntity(raw = '') {
+  const source = String(raw).replace(/\r\n/g, '\n');
+  const boundary = source.indexOf('\n\n');
+  if (boundary < 0) return {headerText: '', body: source};
+  return {headerText: source.slice(0, boundary), body: source.slice(boundary + 2)};
+}
+
+/** Extract a semicolon-delimited MIME header parameter such as boundary/charset. */
+function mimeParameter(value = '', name = '') {
+  const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(value).match(new RegExp(`(?:^|;)\\s*${escaped}\\s*=\\s*(?:"([^"]*)"|([^;\\s]+))`, 'i'));
+  return (match?.[1] ?? match?.[2] ?? '').trim();
+}
+
+/** Decode bytes using a declared MIME charset with a UTF-8 fallback. */
+function decodeBytes(bytes, charset = 'utf-8') {
+  try {
+    return new TextDecoder(charset || 'utf-8', {fatal: false}).decode(bytes);
+  } catch {
+    return new TextDecoder('utf-8', {fatal: false}).decode(bytes);
+  }
+}
+
+/** Decode a base64 MIME body into text without network access. */
+function decodeBase64Body(value = '', charset = 'utf-8') {
+  const compact = String(value).replace(/\s+/g, '');
+  if (!compact) return '';
+  const binary = globalThis.atob(compact);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return decodeBytes(bytes, charset);
+}
+
+/** Decode quoted-printable text, including soft line breaks. */
+function decodeQuotedPrintableBody(value = '', charset = 'utf-8') {
+  const source = String(value).replace(/=\n/g, '');
+  const bytes = [];
+  const encoder = new TextEncoder();
+
+  for (let index = 0; index < source.length; index += 1) {
+    const hex = source.slice(index + 1, index + 3);
+    if (source[index] === '=' && /^[A-F0-9]{2}$/i.test(hex)) {
+      bytes.push(Number.parseInt(hex, 16));
+      index += 2;
+      continue;
+    }
+    bytes.push(...encoder.encode(source[index]));
+  }
+
+  return decodeBytes(new Uint8Array(bytes), charset);
+}
+
+/** Split a multipart MIME body into child entities by exact boundary lines. */
+function splitMultipartBody(body = '', boundary = '') {
+  if (!boundary) return [];
+  const marker = `--${boundary}`;
+  const closing = `--${boundary}--`;
+  const parts = [];
+  let current = null;
+
+  for (const line of String(body).replace(/\r\n/g, '\n').split('\n')) {
+    const trimmed = line.trimEnd();
+    if (trimmed === marker) {
+      if (current?.length) parts.push(current.join('\n'));
+      current = [];
+      continue;
+    }
+    if (trimmed === closing) {
+      if (current?.length) parts.push(current.join('\n'));
+      current = null;
+      break;
+    }
+    if (current) current.push(line);
+  }
+
+  return parts;
+}
+
+/** Recursively decode text-bearing MIME entities while ignoring binary attachments. */
+function decodeMimeEntity(raw = '', depth = 0) {
+  if (depth > 12) return [];
+  const {headerText, body} = splitMimeEntity(raw);
+  const {headers} = parseHeaderBlock(headerText);
+  const contentType = firstHeader(headers, 'content-type') || 'text/plain; charset=utf-8';
+  const transferEncoding = firstHeader(headers, 'content-transfer-encoding').toLowerCase();
+  const mediaType = contentType.split(';')[0].trim().toLowerCase();
+  const charset = mimeParameter(contentType, 'charset') || 'utf-8';
+
+  if (mediaType.startsWith('multipart/')) {
+    const boundary = mimeParameter(contentType, 'boundary');
+    return splitMultipartBody(body, boundary).flatMap((part) => decodeMimeEntity(part, depth + 1));
+  }
+
+  if (mediaType === 'message/rfc822') {
+    return decodeMimeEntity(body, depth + 1);
+  }
+
+  if (!mediaType.startsWith('text/')) return [];
+
+  try {
+    if (transferEncoding === 'base64') return [decodeBase64Body(body, charset)];
+    if (transferEncoding === 'quoted-printable') return [decodeQuotedPrintableBody(body, charset)];
+    return [body];
+  } catch {
+    return [body];
+  }
+}
+
+/** Decode text/plain and text/html bodies from a MIME message for IOC extraction. */
+export function decodeMimeMessage(raw = '') {
+  const parts = decodeMimeEntity(raw).map((part) => part.trim()).filter(Boolean);
+  return {text: parts.join('\n\n'), textPartCount: parts.length};
+}
+
+/** Build a simple relationship graph between extracted public observables. */
 export function buildRelationshipGraph(iocs = {}) {
   const nodes = [];
   const edges = [];
@@ -282,10 +417,33 @@ export function buildRelationshipGraph(iocs = {}) {
   return {nodes, edges};
 }
 
+/** Calculate a normalized case triage score using only analysis types that are present. */
 export function caseRiskScore({emailAnalysis, urlAnalyses = [], analystSignals = []} = {}) {
-  const emailScore = emailAnalysis?.riskScore ?? 0;
-  const urlScore = Math.min(50, urlAnalyses.reduce((sum, item) => sum + (item?.score ?? 0), 0));
-  const analystScore = Math.min(40, analystSignals.reduce((sum, item) => sum + severityWeight(item.severity), 0));
-  const score = Math.min(100, Math.round(emailScore * 0.6 + urlScore * 0.25 + analystScore * 0.15));
+  const hasEmail = Boolean(
+    emailAnalysis && (
+      (emailAnalysis.ordered?.length ?? 0) > 0 ||
+      (emailAnalysis.received?.length ?? 0) > 0 ||
+      emailAnalysis.summary?.from
+    ),
+  );
+  const hasUrls = urlAnalyses.length > 0;
+  const hasAnalystSignals = analystSignals.length > 0;
+
+  const emailScore = Math.max(0, Math.min(100, emailAnalysis?.riskScore ?? 0));
+  const urlRaw = Math.min(50, urlAnalyses.reduce((sum, item) => sum + (item?.score ?? 0), 0));
+  const analystRaw = Math.min(40, analystSignals.reduce((sum, item) => sum + severityWeight(item.severity), 0));
+  const urlScore = (urlRaw / 50) * 100;
+  const analystScore = (analystRaw / 40) * 100;
+
+  const components = [
+    hasEmail ? {score: emailScore, weight: 0.6} : null,
+    hasUrls ? {score: urlScore, weight: 0.25} : null,
+    hasAnalystSignals ? {score: analystScore, weight: 0.15} : null,
+  ].filter(Boolean);
+
+  const totalWeight = components.reduce((sum, component) => sum + component.weight, 0);
+  const weighted = components.reduce((sum, component) => sum + component.score * component.weight, 0);
+  const score = totalWeight ? Math.max(0, Math.min(100, Math.round(weighted / totalWeight))) : 0;
+
   return {score, band: score >= 70 ? 'high' : score >= 40 ? 'elevated' : score >= 20 ? 'guarded' : 'low'};
 }
