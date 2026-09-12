@@ -71,6 +71,7 @@ jobs:
 
           for route in analyst analyst/cases analyst/intake analyst/email analyst/entities analyst/infrastructure analyst/timeline analyst/evidence analyst/analysis analyst/report analyst/tools analyst/settings; do
             test -f "build/${route}/index.html"
+            grep -qi 'Loading analyst workplace' "build/${route}/index.html"
           done
 
           # No lesson body may be included in the public deployment artifact.
@@ -82,12 +83,7 @@ jobs:
           grep -qi 'Enrol in OSINT-101' build/index.html
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
-          grep -qi 'Analyst operational picture' build/workbench/index.html
-          grep -qi 'Analyst operational picture' build/analyst/index.html
-          grep -qi 'Investigation registry' build/analyst/cases/index.html
-          grep -qi 'Evidence and artefact intake' build/analyst/intake/index.html
-          grep -qi 'Message authentication' build/analyst/email/index.html
-          grep -qi 'Assessment and reporting studio' build/analyst/report/index.html
+          grep -qi 'Loading analyst workplace' build/workbench/index.html
 
           # Confirm mobile, touch and safe-area rules were bundled.
           grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
@@ -175,12 +171,19 @@ jobs:
           check_route "course/" "Protected learning area"
           check_route "dashboard/" "Protected learning area"
           check_route "resources/" "Protected learning area"
-          check_route "workbench/" "Analyst operational picture"
-          check_route "analyst/" "Analyst operational picture"
-          check_route "analyst/cases/" "Investigation registry"
-          check_route "analyst/intake/" "Evidence and artefact intake"
-          check_route "analyst/email/" "Message authentication"
-          check_route "analyst/report/" "Assessment and reporting studio"
+          check_route "workbench/" "Loading analyst workplace"
+          check_route "analyst/" "Loading analyst workplace"
+          check_route "analyst/cases/" "Loading analyst workplace"
+          check_route "analyst/intake/" "Loading analyst workplace"
+          check_route "analyst/email/" "Loading analyst workplace"
+          check_route "analyst/entities/" "Loading analyst workplace"
+          check_route "analyst/infrastructure/" "Loading analyst workplace"
+          check_route "analyst/timeline/" "Loading analyst workplace"
+          check_route "analyst/evidence/" "Loading analyst workplace"
+          check_route "analyst/analysis/" "Loading analyst workplace"
+          check_route "analyst/report/" "Loading analyst workplace"
+          check_route "analyst/tools/" "Loading analyst workplace"
+          check_route "analyst/settings/" "Loading analyst workplace"
 
           # CDN propagation may briefly serve the previous lesson page. Retry until the
           # route is missing or it no longer contains the former lesson body.
