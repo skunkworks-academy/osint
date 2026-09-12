@@ -42,6 +42,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --prefer-offline
 
+      - name: Test forensic utilities
+        run: npm run test:forensics
+
       - name: Validate responsive source requirements
         run: npm run validate:responsive
 
@@ -63,6 +66,7 @@ jobs:
           test -f build/course/index.html
           test -f build/dashboard/index.html
           test -f build/resources/index.html
+          test -f build/workbench/index.html
 
           # Protected lesson bodies must never be generated into the public Pages artifact.
           test ! -e build/course/welcome/index.html
@@ -73,6 +77,7 @@ jobs:
           grep -qi 'Enrol in OSINT-101' build/index.html
           grep -qi 'Account and enrolment required' build/enrol/index.html
           grep -qi 'Protected learning area' build/course/index.html
+          grep -qi 'Investigation console' build/workbench/index.html
 
           # Confirm the additional responsive stylesheet was bundled into the generated site.
           grep -R -q --include='*.css' 'prefers-reduced-data' build/assets/css
