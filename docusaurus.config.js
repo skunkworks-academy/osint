@@ -1,7 +1,7 @@
 const config = {
   title: 'OSINT Investigation Methodology',
   tagline: 'Methodology first. Legal by design. Evidence-ready.',
-  favicon: 'img/favicon.svg',
+  favicon: 'images/favicon-search.png',
   url: 'https://osint.skunkworksacademy.com',
   baseUrl: '/',
   trailingSlash: true,
