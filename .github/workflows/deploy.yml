@@ -133,7 +133,7 @@ jobs:
         run: |
           set -euo pipefail
           base_url="${PAGE_URL%/}/"
-          routes=("" "course/welcome/" "resources/")
+          routes=("" "enrol/" "login/" "course/" "dashboard/" "resources/" "workbench/")
 
           for route in "${routes[@]}"; do
             url="${base_url}${route}"
@@ -153,6 +153,27 @@ jobs:
               --output "${output}"
             grep -qi '<!doctype html' "${output}"
             grep -qi 'OSINT' "${output}"
+          done
+
+          grep -q 'Account and enrolment required' /tmp/osint-enrol-.html
+          grep -q 'Protected learning area' /tmp/osint-course-.html
+
+          # These lesson bodies are excluded from the public artifact above.
+          # An HTTP 200 here is a publishing failure, even if it is an HTML page.
+          protected_routes=("course/welcome/" "course/guardrails/" "course/workflow/overview/" "course/assessment/final-assessment/")
+          for route in "${protected_routes[@]}"; do
+            url="${base_url}${route}"
+            echo "Checking protected route remains unavailable: ${url}"
+            status="$(curl \
+              --silent --show-error --location \
+              --retry 3 --retry-all-errors --retry-delay 5 \
+              --connect-timeout 10 --max-time 30 \
+              --output /dev/null --write-out '%{http_code}' \
+              "${url}")"
+            if [ "${status}" != '404' ]; then
+              echo "Expected HTTP 404 for protected lesson ${route}; received ${status}."
+              exit 1
+            fi
           done
 
       - name: Publish successful deployment status
